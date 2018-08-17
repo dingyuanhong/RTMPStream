@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\win">
+      <UniqueIdentifier>{750ccf84-f91a-4c6a-9481-e5d4b0614eb7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="win\cursor.cc">
+      <Filter>Source Files\win</Filter>
+    </ClCompile>
+    <ClCompile Include="win\desktop.cc">
+      <Filter>Source Files\win</Filter>
+    </ClCompile>
+    <ClCompile Include="win\scoped_thread_desktop.cc">
+      <Filter>Source Files\win</Filter>
+    </ClCompile>
+    <ClCompile Include="win\screen_capture_utils.cc">
+      <Filter>Source Files\win</Filter>
+    </ClCompile>
+    <ClCompile Include="win\screen_capturer_win_gdi.cc">
+      <Filter>Source Files\win</Filter>
+    </ClCompile>
+    <ClCompile Include="win\window_capture_utils.cc">
+      <Filter>Source Files\win</Filter>
+    </ClCompile>
+    <ClCompile Include="atomic32_win.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="condition_variable_event_win.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="desktop_and_cursor_composer.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="desktop_capture_options.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="desktop_frame.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="desktop_frame_win.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="desktop_geometry.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="desktop_region.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mouse_cursor.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mouse_cursor_monitor_win.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rw_lock.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rw_lock_win.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="rw_lock_winxp_win.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="screen_capturer_helper.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="screen_capturer_win.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shared_desktop_frame.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shared_memory.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tick_util.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="timeutils.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="win32.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="window_capturer_win.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="win\cursor.h">
+      <Filter>Source Files\win</Filter>
+    </ClInclude>
+    <ClInclude Include="win\desktop.h">
+      <Filter>Source Files\win</Filter>
+    </ClInclude>
+    <ClInclude Include="win\scoped_gdi_object.h">
+      <Filter>Source Files\win</Filter>
+    </ClInclude>
+    <ClInclude Include="win\scoped_thread_desktop.h">
+      <Filter>Source Files\win</Filter>
+    </ClInclude>
+    <ClInclude Include="win\screen_capture_utils.h">
+      <Filter>Source Files\win</Filter>
+    </ClInclude>
+    <ClInclude Include="win\screen_capturer_win_gdi.h">
+      <Filter>Source Files\win</Filter>
+    </ClInclude>
+    <ClInclude Include="win\window_capture_utils.h">
+      <Filter>Source Files\win</Filter>
+    </ClInclude>
+    <ClInclude Include="atomic32.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="condition_variable_event_win.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="constructormagic.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="desktop_and_cursor_composer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="desktop_capture_options.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="desktop_capture_types.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="desktop_capturer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="desktop_frame.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="desktop_frame_win.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="desktop_geometry.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="desktop_region.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mouse_cursor.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mouse_cursor_monitor.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rw_lock_win.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rw_lock_winxp_win.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="rw_lock_wrapper.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scoped_ref_ptr.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="screen_capture_frame_queue.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="screen_capturer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="screen_capturer_helper.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="shared_desktop_frame.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="shared_memory.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="thread_annotations.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tick_util.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="timeutils.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="win32.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="window_capturer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
