@@ -18,9 +18,11 @@ extern "C" {
 //YUYV:X264_CSP_I422
 //I420:X264_CSP_I420
 
+#define PICTURE_TYPE_N 0
 #define PICTURE_TYPE_I 1
 #define PICTURE_TYPE_B 2
 #define PICTURE_TYPE_P 3
+#define PICTURE_TYPE_O 4
 
 class X264Encode {
 public:

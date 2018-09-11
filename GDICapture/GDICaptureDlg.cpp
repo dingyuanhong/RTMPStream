@@ -13,6 +13,7 @@
 
 #include "x264Encoder.h"
 #include "libyuv.h"
+#include <assert.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -275,7 +276,7 @@ void CGDICaptureDlg::OnCaptureCompletedMP4(webrtc::DesktopFrame* frame)
 	if (encode == NULL)
 	{
 		encode = new X264Encode();
-		encode->init(width, height, 30, 1000, X264_CSP_I420, false);
+		encode->init(width, height, 30, 3*1024*1024, X264_CSP_I420, false);
 		encode->start(this);
 
 		AVStream stream = {0};
@@ -341,6 +342,8 @@ void CGDICaptureDlg::OnCaptureCompleted(webrtc::DesktopFrame* frame)
 
 void CGDICaptureDlg::onPacket(uint8_t * packet, int len, int keyFrame, int64_t timestamp)
 {
+	if (keyFrame == PICTURE_TYPE_N) return;
+	
 	int i = 0;
 	int size = len;
 
@@ -362,7 +365,7 @@ void CGDICaptureDlg::onPacket(uint8_t * packet, int len, int keyFrame, int64_t t
 	memcpy(&data[i], packet, len);
 
 	pkt->pts = pkt->dts = (timestamp - start_time)*10;
-	printf("%lld %lld %d\n", timeGetTime() - timestamp,pkt->pts,pkt->size);
+	printf("%lld %lld %d %d\n", timeGetTime() - timestamp,pkt->pts,pkt->size, keyFrame);
 
 	index_frame++;
 	if (keyFrame == PICTURE_TYPE_I)

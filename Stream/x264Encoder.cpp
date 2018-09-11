@@ -41,7 +41,7 @@ int X264Encode::init(int width,int height,int fps,int bitrate, uint32_t pixelFor
 	m_width = width;
 	m_height = height;
 	m_frameRate = fps;
-	m_bitRate = bitrate;
+	m_bitRate = bitrate/1000;
 	m_byteFrameSize = m_width*m_height;
 
 	x264_param_default(&param);//设置默认参数具体见common/common.c
@@ -64,9 +64,9 @@ int X264Encode::init(int width,int height,int fps,int bitrate, uint32_t pixelFor
 	//帧设置
 	param.i_frame_total = 0; 			//* 编码总帧数.不知道用0.
 	param.i_keyint_min = 0;				//关键帧最小间隔
-	param.i_keyint_max = (int)fps * 2;	//关键帧最大间隔
+	param.i_keyint_max = (int)fps;	//关键帧最大间隔
 	param.b_annexb = 1;					//1前面为0x00000001,0为nal长度
-	param.b_repeat_headers = 1;			//关键帧前面是否放sps跟pps帧，0 否 1，放
+	param.b_repeat_headers = 0;			//关键帧前面是否放sps跟pps帧，0 否 1，放,实时视频传输时，需要实时发送sps,pps数据
 	
 	//* B帧参数
 	param.i_bframe = 0;					//B帧
@@ -83,7 +83,7 @@ int X264Encode::init(int width,int height,int fps,int bitrate, uint32_t pixelFor
 	}
 	else {
 		param.rc.b_filler = 1;
-		param.rc.i_rc_method = X264_RC_CQP;		 //参数i_rc_method表示码率控制，CQP(恒定质量)，CRF(恒定码率)，ABR(平均码率)
+		param.rc.i_rc_method = X264_RC_ABR;		 //参数i_rc_method表示码率控制，CQP(恒定质量)，CRF(恒定码率)，ABR(平均码率)
 		param.rc.i_vbv_max_bitrate = m_bitRate;  // 平均码率模式下，最大瞬时码率，默认0(与-B设置相同)
 		param.rc.i_vbv_buffer_size = m_bitRate; //vbv-bufsize
 	}
@@ -171,24 +171,18 @@ int X264Encode::encode(x264_picture_t *image,int64_t timestamp)
 	for (int i = 0; i < i_nal; i++) {
 		uint8_t * packet = nal_t[i].p_payload;
 		int len = nal_t[i].i_payload;
-		int picture_type = 0;
-
-		switch (nal_t[i].i_type) {
-		case X264_TYPE_IDR:
-		case X264_TYPE_I:
+		int picture_type = PICTURE_TYPE_N;
+		int i_type = nal_t[i].i_type;
+		if (i_type == NAL_SLICE_IDR) {
 			picture_type = PICTURE_TYPE_I;
-			break;
-		case X264_TYPE_P:
-			picture_type = PICTURE_TYPE_P;
-			break;
-		case X264_TYPE_B:
-		case X264_TYPE_BREF:
-			picture_type = PICTURE_TYPE_B;
-			break;
-		default:
-			break;
 		}
-		if (picture_type == 0) continue;
+		else if (i_type == NAL_SLICE) {
+			picture_type = PICTURE_TYPE_B;
+		}
+		else if(i_type == NAL_SLICE_DPA || i_type == NAL_SLICE_DPB || i_type == NAL_SLICE_DPC){
+			picture_type = PICTURE_TYPE_P;
+		}
+
 		if (callback_ != NULL) {
 			callback_->onPacket(packet, len, picture_type, timestamp);
 		}
