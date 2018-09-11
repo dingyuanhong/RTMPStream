@@ -362,7 +362,7 @@ void CGDICaptureDlg::onPacket(uint8_t * packet, int len, int keyFrame, int64_t t
 	memcpy(&data[i], packet, len);
 
 	pkt->pts = pkt->dts = (timestamp - start_time)*10;
-	printf("%lld\n",pkt->pts);
+	printf("%lld %lld %d\n", timeGetTime() - timestamp,pkt->pts,pkt->size);
 
 	index_frame++;
 	if (keyFrame == PICTURE_TYPE_I)

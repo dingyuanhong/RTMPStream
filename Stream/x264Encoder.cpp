@@ -30,7 +30,7 @@ void setX264EncodeParam(x264_param_t *param) {
 		{
 			for (int j = 0; j < sizeof(x264Option) / sizeof(x264Option[0]); j++)
 			{
-				ss_set_option((uint8_t*)param, &x264Option[j],it.name(),it.key());
+				ss_set_option((uint8_t*)param, &x264Option[j],it.name(),*it);
 			}
 		}
 	}
@@ -83,7 +83,7 @@ int X264Encode::init(int width,int height,int fps,int bitrate, uint32_t pixelFor
 	}
 	else {
 		param.rc.b_filler = 1;
-		param.rc.i_rc_method = X264_RC_ABR;		 //参数i_rc_method表示码率控制，CQP(恒定质量)，CRF(恒定码率)，ABR(平均码率)
+		param.rc.i_rc_method = X264_RC_CQP;		 //参数i_rc_method表示码率控制，CQP(恒定质量)，CRF(恒定码率)，ABR(平均码率)
 		param.rc.i_vbv_max_bitrate = m_bitRate;  // 平均码率模式下，最大瞬时码率，默认0(与-B设置相同)
 		param.rc.i_vbv_buffer_size = m_bitRate; //vbv-bufsize
 	}

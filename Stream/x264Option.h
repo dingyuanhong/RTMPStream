@@ -27,34 +27,38 @@ typedef struct SSOption {
 }SSOption;
 
 void ss_set_option(uint8_t* obj, SSOption * option, std::string &name, Json::Value &value) {
-	if (option->name == name)
+	if (strcmp(option->name , name.c_str()) == 0)
 	{
-		if (option->type == AV_OPT_TYPE_FLAGS)
-		{
-			*(bool*)(obj + option->offset) = value.asBool();
-		}
-		else if (option->type == AV_OPT_TYPE_UINT)
-		{
-			*(Json::Value::UInt*)(obj + option->offset) = value.asUInt();
-		}
-		else if (option->type == AV_OPT_TYPE_INT)
-		{
-			*(int*)(obj + option->offset) = value.asInt();
-		}
-		else if (option->type == AV_OPT_TYPE_INT64)
-		{
-			*(Json::Value::Int64*)(obj + option->offset) = value.asInt64();
-		}
-		else if (option->type == AV_OPT_TYPE_FLOAT)
-		{
-			*(float*)(obj + option->offset) = value.asFloat();
-		}
-		else if (option->type == AV_OPT_TYPE_DOUBLE)
-		{
-			*(double*)(obj + option->offset) = value.asDouble();
-		}
-		else {
+		try{
+			if (option->type == AV_OPT_TYPE_FLAGS)
+			{
+				*(bool*)(obj + option->offset) = value.asBool();
+			}
+			else if (option->type == AV_OPT_TYPE_UINT)
+			{
+				*(Json::Value::UInt*)(obj + option->offset) = value.asUInt();
+			}
+			else if (option->type == AV_OPT_TYPE_INT)
+			{
+				*(int*)(obj + option->offset) = value.asInt();
+			}
+			else if (option->type == AV_OPT_TYPE_INT64)
+			{
+				*(Json::Value::Int64*)(obj + option->offset) = value.asInt64();
+			}
+			else if (option->type == AV_OPT_TYPE_FLOAT)
+			{
+				*(float*)(obj + option->offset) = value.asFloat();
+			}
+			else if (option->type == AV_OPT_TYPE_DOUBLE)
+			{
+				*(double*)(obj + option->offset) = value.asDouble();
+			}
+			else {
 
+			}
+		}
+		catch (...) {
 		}
 	}
 }
