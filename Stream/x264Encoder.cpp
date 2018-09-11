@@ -14,7 +14,7 @@
 void setX264EncodeParam(x264_param_t *param) {
 	
 	std::ifstream in;
-	in.open("x264.config",std::ios::in,0);
+	in.open("x264.config.json");
 	if(!in) return;
 
 	Json::CharReaderBuilder builder;
@@ -120,14 +120,19 @@ int X264Encode::init(int width,int height,int fps,int bitrate, uint32_t pixelFor
 		for (int i = 0; i < i_nal; i++) {
 			//获取SPS数据，PPS数据
 			if (nal_t[i].i_type == NAL_SPS) {
-				m_sps = new unsigned char[nal_t[i].i_payload - 4];
-				m_sps_len = nal_t[i].i_payload - 4;
-				memcpy(m_sps, nal_t[i].p_payload + 4, nal_t[i].i_payload - 4);
+				m_sps = new unsigned char[nal_t[i].i_payload];
+				m_sps_len = nal_t[i].i_payload;
+				memcpy(m_sps, nal_t[i].p_payload, nal_t[i].i_payload);
 			}
 			else if (nal_t[i].i_type == NAL_PPS) {
-				m_pps = new unsigned char[nal_t[i].i_payload - 4];;
-				m_pps_len = nal_t[i].i_payload - 4;
-				memcpy(m_pps, nal_t[i].p_payload + 4, nal_t[i].i_payload - 4);
+				m_pps = new unsigned char[nal_t[i].i_payload];;
+				m_pps_len = nal_t[i].i_payload;
+				memcpy(m_pps, nal_t[i].p_payload, nal_t[i].i_payload);
+			}
+			else if (nal_t[i].i_type == NAL_SEI) {
+				m_sei = new unsigned char[nal_t[i].i_payload];;
+				m_sei_len = nal_t[i].i_payload;
+				memcpy(m_sei, nal_t[i].p_payload, nal_t[i].i_payload);
 			}
 		}
 		return 1;
@@ -151,8 +156,8 @@ x264_picture_t * X264Encode::LockInput()
 
 void X264Encode::UnlockInput(x264_picture_t* image)
 {
-	available_count++;
 	m_pPool[available_count] = image;
+	available_count++;
 }
 
 int X264Encode::encode(x264_picture_t *image,int64_t timestamp)
@@ -164,19 +169,28 @@ int X264Encode::encode(x264_picture_t *image,int64_t timestamp)
 
 	int rResult = 0;
 	for (int i = 0; i < i_nal; i++) {
-		int bKeyFrame = 0;
-		//获取帧数据
-		if (nal_t[i].i_type == NAL_SLICE || nal_t[i].i_type == NAL_SLICE_IDR) {
-			if (nal_t[i].i_type == NAL_SLICE_IDR)
-				bKeyFrame = 1;
+		uint8_t * packet = nal_t[i].p_payload;
+		int len = nal_t[i].i_payload;
+		int picture_type = 0;
 
-			uint8_t * packet = nal_t[i].p_payload + 4;
-			int len = nal_t[i].i_payload - 4;
-
-			//回调数据
-			if (callback_ != NULL) {
-				callback_->onPacket(packet,len, bKeyFrame,timestamp);
-			}
+		switch (nal_t[i].i_type) {
+		case X264_TYPE_IDR:
+		case X264_TYPE_I:
+			picture_type = PICTURE_TYPE_I;
+			break;
+		case X264_TYPE_P:
+			picture_type = PICTURE_TYPE_P;
+			break;
+		case X264_TYPE_B:
+		case X264_TYPE_BREF:
+			picture_type = PICTURE_TYPE_B;
+			break;
+		default:
+			break;
+		}
+		if (picture_type == 0) continue;
+		if (callback_ != NULL) {
+			callback_->onPacket(packet, len, picture_type, timestamp);
 		}
 	}
 	return rResult;
@@ -196,6 +210,12 @@ void X264Encode::close()
 	}
 	m_pps_len = 0;
 
+	if (m_sei) {
+		delete[]m_sei;
+		m_sei = NULL;
+	}
+	m_sei_len = 0;
+
 	if (h) {
 		x264_encoder_close(h);
 		h = NULL;
@@ -210,7 +230,7 @@ void X264Encode::close()
 	}
 
 	if (m_pPool != NULL) {
-		memset(m_pPool,NULL, max_input_count);
+		memset(m_pPool,NULL, sizeof(x264_picture_t*)*max_input_count);
 		delete[] m_pPool;
 		m_pPool = NULL;
 	}

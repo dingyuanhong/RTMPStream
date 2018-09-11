@@ -34,7 +34,12 @@ CGDICaptureApp::CGDICaptureApp()
 
 CGDICaptureApp theApp;
 
-
+void ConsoleMFC()
+{
+	AllocConsole();
+	SetConsoleTitle(_T("debug console"));
+	freopen("CONOUT$", "w", stdout);
+}
 // CGDICaptureApp initialization
 
 BOOL CGDICaptureApp::InitInstance()
@@ -69,6 +74,8 @@ BOOL CGDICaptureApp::InitInstance()
 	// TODO: You should modify this string to be something appropriate
 	// such as the name of your company or organization
 	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
+
+	ConsoleMFC();
 
 	CGDICaptureDlg dlg;
 	m_pMainWnd = &dlg;

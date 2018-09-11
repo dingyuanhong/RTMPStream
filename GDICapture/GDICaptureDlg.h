@@ -49,6 +49,7 @@ private:
 	CAviFile * file = NULL;
 	X264Encode * encode = NULL;
 	Encode *mp4 = NULL;
+	bool first_encode = false;
 
 	uint8_t * cache_e = NULL;
 	int cache_e_max_len = 0;
@@ -65,7 +66,10 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+
+	void OnClose();
 public:
+	afx_msg void OnDestroy();
 	afx_msg void OnTimer(UINT_PTR);
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedOk();

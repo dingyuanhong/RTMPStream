@@ -11,6 +11,12 @@ public:
 	virtual int NewVideoStream(AVStream * stream, int width, int height, AVPixelFormat pixFormat);
 	virtual int NewAudioStream(AVStream * stream);
 
+#ifdef USE_NEW_API
+	AVCodecParameters *GetCodecContext(AVMediaType type);
+#else
+	AVCodecContext *GetCodecContext(AVMediaType type);
+#endif
+
 	int WriteHeader();
 	int WriteVideo(AVPacket *packet);
 	int WriteAudio(AVPacket *packet);

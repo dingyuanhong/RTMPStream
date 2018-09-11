@@ -53,6 +53,7 @@ BEGIN_MESSAGE_MAP(CGDICaptureDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_WM_TIMER()
+	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDCANCEL, &CGDICaptureDlg::OnBnClickedCancel)
 	ON_BN_CLICKED(IDOK, &CGDICaptureDlg::OnBnClickedOk)
 	ON_BN_CLICKED(IDC_BUTTON1, &CGDICaptureDlg::OnBnClickedButton1)
@@ -114,7 +115,10 @@ HCURSOR CGDICaptureDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-
+void CGDICaptureDlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+}
 
 void CGDICaptureDlg::OnBnClickedCancel()
 {
@@ -130,46 +134,32 @@ void CGDICaptureDlg::OnBnClickedOk()
 
 void CGDICaptureDlg::OnBnClickedButton1()
 {
-	if (composer != NULL) {
-		delete composer;
-		composer = NULL;
-	}
-
-	if (screen != NULL) {
-		delete screen;
-		screen = NULL;
-	}
-	if (mouse_monitor != NULL)
-	{
-		delete mouse_monitor;
-		mouse_monitor = NULL;
-	}
-	if (cache != NULL)
-	{
-		free(cache);
-		cache = NULL;
-	}
-	if (file != NULL)
-	{
-		delete file;
-		file = NULL;
-	}
+	OnClose();
 
 	webrtc::DesktopCaptureOptions options;
-	screen = webrtc::ScreenCapturer::Create(options);
-	webrtc::ScreenCapturer::ScreenList list;
-	screen->GetScreenList(&list);
-	screen->SelectScreen(list[0].id);
-
-	mouse_monitor = webrtc::MouseCursorMonitor::CreateForScreen(options,0);
-
-	composer = new webrtc::DesktopAndCursorComposer(screen,mouse_monitor);
+	if (screen == NULL)
+	{
+		screen = webrtc::ScreenCapturer::Create(options);
+		webrtc::ScreenCapturer::ScreenList list;
+		screen->GetScreenList(&list);
+		screen->SelectScreen(list[0].id);
+	}
+	
+	if (mouse_monitor == NULL)
+	{
+		mouse_monitor = webrtc::MouseCursorMonitor::CreateForScreen(options, 0);
+	}
 
 	//capturer = screen;
+
+	composer = new webrtc::DesktopAndCursorComposer(screen,mouse_monitor);
+	screen = NULL;
+	mouse_monitor = NULL;
 	capturer = composer;
+
 	capturer->Start(this);
 
-	
+	first_encode = true;
 	mp4 = new Encode();
 	mp4->Open("Output.mp4");
 
@@ -180,17 +170,23 @@ void CGDICaptureDlg::OnBnClickedButton1()
 
 void CGDICaptureDlg::OnBnClickedButton2()
 {
+	OnClose();
+}
+
+void CGDICaptureDlg::OnClose()
+{
 	KillTimer(WM_TIME_CAPTURE);
-	
+
 	if (mp4 != NULL)
 	{
-		mp4->WriteTrailer();
+		int ret = mp4->WriteTrailer();
+		assert(ret == 0);
 
 		delete mp4;
 
 		mp4 = NULL;
 	}
-	
+
 	index_frame = 0;
 
 	if (file != NULL)
@@ -198,6 +194,49 @@ void CGDICaptureDlg::OnBnClickedButton2()
 		delete file;
 		file = NULL;
 	}
+
+	if (composer != NULL)
+	{
+		delete composer;
+		composer = NULL;
+	}
+	if (screen != NULL)
+	{
+		delete screen;
+		screen = NULL;
+	}
+	if (mouse_monitor != NULL)
+	{
+		delete mouse_monitor;
+		mouse_monitor = NULL;
+	}
+
+
+	if (capturer != NULL)
+	{
+		capturer = NULL;
+	}
+
+	if (encode != NULL) 
+	{
+		encode->close();
+		delete encode;
+		encode = NULL;
+	}
+
+	if (cache != NULL)
+	{
+		free(cache);
+		cache = NULL;
+	}
+
+	if (cache_e != NULL)
+	{
+		free(cache_e);
+		cache_e = NULL;
+	}
+
+	first_encode = false;
 }
 
 void RGBAtRGB(uint8_t* src,int width,int height, uint8_t *des) {
@@ -246,11 +285,25 @@ void CGDICaptureDlg::OnCaptureCompletedMP4(webrtc::DesktopFrame* frame)
 		stream.avg_frame_rate = { 30, 1 };
 
 		mp4->NewVideoStream(&stream,width,height, AV_PIX_FMT_YUV420P);
+
+		int l = encode->spsLen();
+		l += encode->ppsLen();
+		l += 8;
+		uint8_t * extraData = (uint8_t*)av_malloc(l);
+		int index = 0;
+		memcpy(extraData + index, encode->getSPS(),encode->spsLen());
+		index += encode->spsLen();
+		memcpy(extraData + index, encode->getPPS(), encode->ppsLen());
+		
+		AVCodecContext * codecContent = mp4->GetCodecContext(AVMEDIA_TYPE_VIDEO);
+		codecContent->extradata = extraData;
+		codecContent->extradata_size = l;
+
 		int ret = mp4->WriteHeader();
 		assert(ret == 0);
 		if (ret != 0) {
 			char buffer[255];
-			av_strerror(ret,buffer,255);
+			av_strerror(ret, buffer, 255);
 			return;
 		}
 
@@ -291,56 +344,28 @@ void CGDICaptureDlg::onPacket(uint8_t * packet, int len, int keyFrame, int64_t t
 	int i = 0;
 	int size = len;
 
-	if (keyFrame) {
-		av_new_packet(pkt, size + 4 * 3 + encode->spsLen() + encode->ppsLen());
+	if (first_encode) {
+		size += encode->seiLen();
 	}
-	else {
-		av_new_packet(pkt, size + 4);
-	}
-	
+
+	av_new_packet(pkt, size);
+
 	uint8_t * data = pkt->data;
 
-	if (keyFrame){
-		/*size = encode->spsLen();
-		data[i++] = size >> 24 & 0xff;
-		data[i++] = size >> 16 & 0xff;
-		data[i++] = size >> 8 & 0xff;
-		data[i++] = size & 0xff;*/
-
-		data[i++] = 0x00;
-		data[i++] = 0x00;
-		data[i++] = 0x00;
-		data[i++] = 0x01;
-		memcpy(&data[i], encode->getSPS(), encode->spsLen());
-		i += encode->spsLen();
-
-		/*size = encode->ppsLen();
-		data[i++] = size >> 24 & 0xff;
-		data[i++] = size >> 16 & 0xff;
-		data[i++] = size >> 8 & 0xff;
-		data[i++] = size & 0xff;*/
-		data[i++] = 0x00;
-		data[i++] = 0x00;
-		data[i++] = 0x00;
-		data[i++] = 0x01;
-		memcpy(&data[i], encode->getPPS(), encode->ppsLen());
-		i += encode->ppsLen();
+	if (first_encode && encode->seiLen() > 0)
+	{
+		memcpy(&data[i], encode->getSEI(), encode->seiLen());
+		i += encode->seiLen();
+		first_encode = false;
 	}
-
-	/*size = len;
-	data[i++] = size >> 24 & 0xff;
-	data[i++] = size >> 16 & 0xff;
-	data[i++] = size >> 8 & 0xff;
-	data[i++] = size & 0xff;*/
-	data[i++] = 0x00;
-	data[i++] = 0x00;
-	data[i++] = 0x00;
-	data[i++] = 0x01;
-	memcpy(&data[i], packet, size);
+	
+	memcpy(&data[i], packet, len);
 
 	pkt->pts = pkt->dts = (timestamp - start_time)*10;
+	printf("%lld\n",pkt->pts);
+
 	index_frame++;
-	if (keyFrame)
+	if (keyFrame == PICTURE_TYPE_I)
 		pkt->flags = AV_PKT_FLAG_KEY;
 	else
 		pkt->flags = 0;

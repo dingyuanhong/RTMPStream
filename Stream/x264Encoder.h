@@ -18,11 +18,15 @@ extern "C" {
 //YUYV:X264_CSP_I422
 //I420:X264_CSP_I420
 
+#define PICTURE_TYPE_I 1
+#define PICTURE_TYPE_B 2
+#define PICTURE_TYPE_P 3
+
 class X264Encode {
 public:
 	class Callback {
 	public:
-		virtual void onPacket(uint8_t * packet, int len,int keyFrame, int64_t timestamp) = 0;
+		virtual void onPacket(uint8_t * packet, int len,int pictureType, int64_t timestamp) = 0;
 	};
 
 	int init(int width, int height, int fps, int bitrate,uint32_t pixelFormat,bool bConstantsBitrate);
@@ -47,6 +51,13 @@ public:
 	uint8_t * getPPS() {
 		return m_pps;
 	}
+
+	uint8_t *getSEI() {
+		return m_sei;
+	}
+	int seiLen() {
+		return m_sei_len;
+	}
 private:
 	int m_width;	 //宽度
 	int m_height;	 // 高度
@@ -56,9 +67,11 @@ private:
 
 	bool m_bHasExtraData;
 	uint8_t * m_sps = NULL;
-	int m_sps_len;
+	int m_sps_len = 0;
 	uint8_t * m_pps = NULL;
-	int m_pps_len;
+	int m_pps_len = 0;
+	uint8_t *m_sei = NULL;
+	int m_sei_len = 0;
 
 	x264_t * h = NULL;
 

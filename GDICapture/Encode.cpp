@@ -178,6 +178,29 @@ int Encode::NewAudioStream(AVStream * stream)
 	return 0;
 }
 
+#ifdef USE_NEW_API
+AVCodecParameters *Encode::GetCodecContext(AVMediaType type)
+#else
+AVCodecContext *Encode::GetCodecContext(AVMediaType type)
+#endif
+{
+	if (formatCtx_ == nullptr) return nullptr;
+	for (int i = 0; i < formatCtx_->nb_streams; i++) {
+		AVStream * stream = formatCtx_->streams[i];
+		if (stream == nullptr) continue;
+#ifdef USE_NEW_API
+		if (stream->codecpar->codec_type == type) {
+			return stream->codecpar;
+		}
+		else 
+#endif
+		if (stream->codec->codec_type == type) {
+			return stream->codec;
+		}
+	}
+	return nullptr;
+}
+
 int Encode::WriteHeader()
 {
 	if (formatCtx_ == NULL) return -1;
