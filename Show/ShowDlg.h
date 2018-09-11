@@ -50,8 +50,8 @@ private:
 	void onPacketVideo(RTMPPacket *pkt);
 
 	void onDataExtra(uint8_t * data, int size);
-	void onDataRaw(uint8_t * data, int size, int keyFrame, uint32_t timeStamp);
-	void onDataPacket(uint8_t * data, int size, int keyFrame, uint32_t timeStamp);
+	void onDataRaw(uint8_t * data, int size, int keyFrame, int64_t timeStamp);
+	void onDataPacket(uint8_t * data, int size, int keyFrame, int64_t timeStamp);
 
 	int CreateDecoder(uint8_t * extData, int size);
 

@@ -102,20 +102,18 @@ public:
 		param_->encode->encode(input, timeGetTime());
 
 		param_->encode->UnlockInput(input);
-
-
 	}
 
 	virtual void onPacket(uint8_t * packet, int len, int keyFrame, int64_t timestamp)
 	{
-		int64_t encode = timeGetTime() - time_used;
-		int ret = param_->publish->send(packet, len, keyFrame == 1, timeGetTime());
+		int64_t begin = timeGetTime();
+		int ret = param_->publish->send(packet + 4, len - 4, keyFrame == PICTURE_TYPE_I, begin);
 		if (ret <= 0) {
 			printf("rtmp error:%d\n", ret);
 		}
-		int64_t send = timeGetTime() - time_used;
+		int64_t send = timeGetTime() - begin;
 
-		printf("c:%d t:%lld e:%lld s:%lld\n", timeGetTime(), timestamp, encode, send);
+		printf("encode:%lld send:%lld t:%lld\n", timeGetTime() - timestamp, send, begin);
 	}
 private:
 	StreamParam *param_;
@@ -127,7 +125,7 @@ void pushAsync(char * url)
 	StreamParam param_ = {
 		1920,1080,
 		30,
-		1024,
+		1024*1024,
 		X264_CSP_I420,
 		0,
 		NULL,
@@ -147,7 +145,7 @@ void pushAsync(char * url)
 	bret = encode->init(param->width, param->height, param->fps, param->rate, param->pixelformat, false);
 	assert(bret == 1);
 
-	publish->setMetaData(encode->getPPS(), encode->ppsLen(), encode->getSPS(), encode->spsLen());
+	publish->setMetaData(encode->getPPS() + 4, encode->ppsLen() - 4, encode->getSPS() + 4, encode->spsLen() - 4);
 
 	param->encode = encode;
 	param->publish = publish;

@@ -218,7 +218,7 @@ public:
 	virtual int onInput(void*data) {
 		Packet * packet = (Packet*)data;
 		
-		int ret = push_->send(packet->data, packet->len, packet->keyFrame == 1, packet->timestamp);
+		int ret = push_->send(packet->data + 4, packet->len - 1, packet->keyFrame == PICTURE_TYPE_I, packet->timestamp);
 		if (ret <= 0) {
 			printf("rtmp error:%d\n", ret);
 		}
@@ -264,7 +264,7 @@ void pushNew(char * url)
 	bret = publish->publish(ChunkSize);
 	assert(bret == 1);
 
-	publish->setMetaData(encode->getPPS(), encode->ppsLen(), encode->getSPS(), encode->spsLen());
+	publish->setMetaData(encode->getPPS()+4, encode->ppsLen()-4, encode->getSPS()+4, encode->spsLen()-4);
 
 	const webrtc::DesktopCaptureOptions options;
 	webrtc::ScreenCapturer * capturer = webrtc::ScreenCapturer::Create(options);

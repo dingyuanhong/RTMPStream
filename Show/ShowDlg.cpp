@@ -419,7 +419,7 @@ void CShowDlg::UpdateImage(AVFrame *frame)
 	CString str;
 	str.Format(_T("%lld"), timeGetTime() - lastDraw);
 	GetDlgItem(IDC_DELAY_FRAME)->SetWindowText(str);
-	str.Format(_T("%lld"), timeGetTime() - (uint64_t)frame->pkt_dts);
+	str.Format(_T("%lld"), timeGetTime() - frame->pkt_duration);
 	GetDlgItem(IDC_STATIC_TOTAL)->SetWindowText(str);
 	lastDraw = timeGetTime();
 }
@@ -450,7 +450,7 @@ void CShowDlg::onDataExtra(uint8_t * data, int size) {
 	CreateDecoder(data,size);
 }
 
-void CShowDlg::onDataRaw(uint8_t * data, int size,int keyFrame,uint32_t timeStamp) {
+void CShowDlg::onDataRaw(uint8_t * data, int size,int keyFrame,int64_t timeStamp) {
 	if (decoder == NULL) {
 		return;
 	}
@@ -480,7 +480,7 @@ void CShowDlg::onDataRaw(uint8_t * data, int size,int keyFrame,uint32_t timeStam
 	}
 }
 
-void CShowDlg::onDataPacket(uint8_t * data, int size, int keyFrame, uint32_t timeStamp) {
+void CShowDlg::onDataPacket(uint8_t * data, int size, int keyFrame, int64_t timeStamp) {
 	AVPacket * pkt = av_packet_alloc();
 	av_new_packet(pkt,size);
 
@@ -488,6 +488,7 @@ void CShowDlg::onDataPacket(uint8_t * data, int size, int keyFrame, uint32_t tim
 	pkt->pts = timeStamp;
 	pkt->dts = timeStamp;
 	pkt->pos = timeGetTime();
+	pkt->duration = timeStamp;
 	pkt->flags = keyFrame;
 
 	int ret = packet_pool.Enqueue(pkt);
@@ -510,13 +511,10 @@ void CShowDlg::onPacketVideo(RTMPPacket *pkt) {
 		onDataExtra(data, size);
 	}
 	else if (body[1] == 0x01) {
-		int64_t time = timeGetTime();
-		time = time - pkt->m_nTimeStamp;
-		//if (time >= 0) 
-		{
-			delayNet = time;
-		}
-		onDataPacket(data, size, keyFrame, pkt->m_nTimeStamp);
+		uint64_t time = pkt->m_nTimeStamp;
+		delayNet = timeGetTime() - time;
+
+		onDataPacket(data, size, keyFrame, time);
 	}
 }
 
@@ -590,8 +588,7 @@ void CShowDlg::RunDecode()
 		int ret = decoder->Decode(pkt, &outFrame);
 		if (outFrame != NULL)
 		{
-			int64_t time = timeGetTime();
-			delayDecode = time - (uint64_t)outFrame->pkt_pos;
+			delayDecode = timeGetTime() - (uint64_t)outFrame->pkt_pos;
 
 			AVFrame *tmpFrame = NULL;
 			//mylock.Lock();
