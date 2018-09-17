@@ -512,7 +512,8 @@ void CShowDlg::onPacketVideo(RTMPPacket *pkt) {
 	}
 	else if (body[1] == 0x01) {
 		uint64_t time = pkt->m_nTimeStamp;
-		delayNet = timeGetTime() - time;
+		uint64_t curr = timeGetTime();
+		delayNet = curr - time;
 
 		onDataPacket(data, size, keyFrame, time);
 	}
@@ -596,7 +597,9 @@ void CShowDlg::RunDecode()
 			nowFrame = outFrame;
 			//mylock.Unlock();
 			FreeAVFrame(&tmpFrame);
-			SendMessage(WM_MESSAGE_UPDATE);
+			if (!bStop) {
+				SendMessage(WM_MESSAGE_UPDATE);
+			}
 		}
 
 		if (pkt != NULL)
