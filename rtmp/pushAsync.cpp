@@ -22,6 +22,7 @@ extern "C" {
 
 #include "libyuv.h"
 
+//单位微秒
 static void usleep(uint32_t usec)
 {
 	struct timeval timeout;
@@ -48,6 +49,28 @@ static int readAble(int fd, uint32_t usec)
 	timeout.tv_usec = usec % 1000000;
 	int ret = select(0, &fds, NULL, &fds, &timeout);
 	return ret;
+}
+
+#include <time.h>      //添加头文件
+int64_t getCurrentTime()
+{
+	struct timeval tv;
+	time_t clock;
+	struct tm tm;
+	SYSTEMTIME wtm;
+
+	GetLocalTime(&wtm);
+	tm.tm_year = wtm.wYear - 1900;
+	tm.tm_mon = wtm.wMonth - 1;
+	tm.tm_mday = wtm.wDay;
+	tm.tm_hour = wtm.wHour;
+	tm.tm_min = wtm.wMinute;
+	tm.tm_sec = wtm.wSecond;
+	tm.tm_isdst = -1;
+	clock = mktime(&tm);
+	tv.tv_sec = clock;
+	tv.tv_usec = wtm.wMilliseconds * 1000;
+	return ((unsigned long long)tv.tv_sec * 1000 + (unsigned long long)tv.tv_usec / 1000);
 }
 
 typedef struct {
@@ -83,7 +106,7 @@ public:
 	}
 
 	void OnCaptureCompletedEncode(webrtc::DesktopFrame* frame) {
-		time_used = timeGetTime();
+		time_used = getCurrentTime();
 
 		int width = frame->size().width();
 		int height = frame->size().height();
@@ -99,21 +122,22 @@ public:
 				width, height);
 		}
 
-		param_->encode->encode(input, timeGetTime());
+		param_->encode->encode(input, getCurrentTime());
 
 		param_->encode->UnlockInput(input);
 	}
 
 	virtual void onPacket(uint8_t * packet, int len, int keyFrame, int64_t timestamp)
 	{
-		int64_t begin = timeGetTime();
+		int64_t begin = getCurrentTime();
 		int ret = param_->publish->send(packet + 4, len - 4, keyFrame == PICTURE_TYPE_I, begin);
 		if (ret <= 0) {
 			printf("rtmp error:%d\n", ret);
 		}
-		int64_t send = timeGetTime() - begin;
+		int64_t send = getCurrentTime() - begin;
 
-		printf("encode:%lld send:%lld t:%lld\n", timeGetTime() - timestamp, send, begin);
+		//printf("encode:%lld send:%lld t:%lld\n", getCurrentTime() - timestamp, send, begin);
+		printf("t:%d\n", uint32_t(begin));
 	}
 private:
 	StreamParam *param_;
@@ -164,9 +188,13 @@ void pushAsync(char * url)
 	webrtc::DesktopRegion region;
 	region.AddRect(webrtc::DesktopRect::MakeWH(1920, 1080));
 
+	uint32 frameInt = 1000 / param->fps;
 	while (true) {
+		int64_t lastRun = getCurrentTime();
 		capturer->Capture(region);
-
-		usleep(1000000 / param->fps);
+		int64_t nowRun = getCurrentTime();
+		int64_t Int = frameInt - (nowRun - lastRun);
+		if (Int < 0) Int = 0;
+		usleep(Int*1000);
 	}
 }

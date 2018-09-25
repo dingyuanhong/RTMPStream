@@ -57,8 +57,8 @@ private:
 
 	bool bStop = true;
 	CCriticalSection mylock;
-	uint64_t lastDraw;
-	uint64_t delayDecode;
+	int64_t lastDraw;
+	int64_t delayDecode;
 	int64_t delayNet;
 // Implementation
 protected:

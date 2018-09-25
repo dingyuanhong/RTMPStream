@@ -61,6 +61,27 @@ std::string UnicodeToANSI(const std::wstring &wstrCmd)
 	return strCmd;
 }
 
+int64_t getCurrentTime()
+{
+	struct timeval tv;
+	time_t clock;
+	struct tm tm;
+	SYSTEMTIME wtm;
+
+	GetLocalTime(&wtm);
+	tm.tm_year = wtm.wYear - 1900;
+	tm.tm_mon = wtm.wMonth - 1;
+	tm.tm_mday = wtm.wDay;
+	tm.tm_hour = wtm.wHour;
+	tm.tm_min = wtm.wMinute;
+	tm.tm_sec = wtm.wSecond;
+	tm.tm_isdst = -1;
+	clock = mktime(&tm);
+	tv.tv_sec = clock;
+	tv.tv_usec = wtm.wMilliseconds * 1000;
+	return ((unsigned long long)tv.tv_sec * 1000 + (unsigned long long)tv.tv_usec / 1000);
+}
+
 DWORD WINAPI thread_callback_read(
 	LPVOID lpThreadParameter
 	)
@@ -417,11 +438,11 @@ void CShowDlg::UpdateImage(AVFrame *frame)
 	DrawPicture(wnd, bmi_, argb);
 
 	CString str;
-	str.Format(_T("%lld"), timeGetTime() - lastDraw);
+	str.Format(_T("%lld"), getCurrentTime() - lastDraw);
 	GetDlgItem(IDC_DELAY_FRAME)->SetWindowText(str);
-	str.Format(_T("%lld"), timeGetTime() - frame->pkt_duration);
+	str.Format(_T("%d"), uint32(getCurrentTime()) - uint32(frame->pkt_duration));
 	GetDlgItem(IDC_STATIC_TOTAL)->SetWindowText(str);
-	lastDraw = timeGetTime();
+	lastDraw = getCurrentTime();
 }
 
 LRESULT AFX_MSG_CALL CShowDlg::onUpdateData(WPARAM, LPARAM)
@@ -459,7 +480,7 @@ void CShowDlg::onDataRaw(uint8_t * data, int size,int keyFrame,int64_t timeStamp
 	packet.data = data;
 	packet.size = size;
 	packet.flags = keyFrame;
-	packet.timestamp = timeGetTime();
+	packet.timestamp = getCurrentTime();
 	packet.pts = timeStamp;
 	packet.dts = timeStamp;
 
@@ -467,8 +488,8 @@ void CShowDlg::onDataRaw(uint8_t * data, int size,int keyFrame,int64_t timeStamp
 	decoder->DecodePacket(&packet, &outFrame);
 	if (outFrame != NULL)
 	{
-		int64_t time = timeGetTime();
-		delayDecode = time - (uint64_t)outFrame->pkt_pos;
+		int64_t time = getCurrentTime();
+		delayDecode = time - outFrame->pkt_pos;
 
 		AVFrame *tmpFrame = NULL;
 		//mylock.Lock();
@@ -487,7 +508,7 @@ void CShowDlg::onDataPacket(uint8_t * data, int size, int keyFrame, int64_t time
 	memcpy(pkt->data,data, pkt->size);
 	pkt->pts = timeStamp;
 	pkt->dts = timeStamp;
-	pkt->pos = timeGetTime();
+	pkt->pos = getCurrentTime();
 	pkt->duration = timeStamp;
 	pkt->flags = keyFrame;
 
@@ -511,11 +532,16 @@ void CShowDlg::onPacketVideo(RTMPPacket *pkt) {
 		onDataExtra(data, size);
 	}
 	else if (body[1] == 0x01) {
-		uint64_t time = pkt->m_nTimeStamp;
-		uint64_t curr = timeGetTime();
-		delayNet = curr - time;
+		int64_t curr = getCurrentTime();
+		delayNet = uint32_t(curr) - pkt->m_nTimeStamp;
 
-		onDataPacket(data, size, keyFrame, time);
+		char buffer[255];
+		sprintf_s(buffer,255, "t:%d\n", pkt->m_nTimeStamp);
+		//OutputDebugStringA(buffer);
+
+		PostMessage(WM_MESSAGE_UPDATE);
+
+		//onDataPacket(data, size, keyFrame, time);
 	}
 }
 
@@ -589,7 +615,8 @@ void CShowDlg::RunDecode()
 		int ret = decoder->Decode(pkt, &outFrame);
 		if (outFrame != NULL)
 		{
-			delayDecode = timeGetTime() - (uint64_t)outFrame->pkt_pos;
+			int64_t time = getCurrentTime();
+			delayDecode = time - outFrame->pkt_pos;
 
 			AVFrame *tmpFrame = NULL;
 			//mylock.Lock();
