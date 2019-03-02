@@ -539,9 +539,9 @@ void CShowDlg::onPacketVideo(RTMPPacket *pkt) {
 		sprintf_s(buffer,255, "t:%d\n", pkt->m_nTimeStamp);
 		//OutputDebugStringA(buffer);
 
-		PostMessage(WM_MESSAGE_UPDATE);
+		//PostMessage(WM_MESSAGE_UPDATE);
 
-		//onDataPacket(data, size, keyFrame, time);
+		onDataPacket(data, size, keyFrame, pkt->m_nTimeStamp);
 	}
 }
 
