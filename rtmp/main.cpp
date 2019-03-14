@@ -49,7 +49,8 @@ void pushDirect(char * url);
 void pushAsync(char * url);
 void pushNew(char * url);
 
-void pull(char * url);
+void pullRaw(char * url, char * output);
+void pullH264(char * url);
 
 int main(int argc,char *argv[]) {
 	if (argc <= 1) {
@@ -70,9 +71,13 @@ int main(int argc,char *argv[]) {
 		if (argc < 2) return -1;
 		pushNew(argv[2]);
 	}
-	else if (strcmp(argv[1], "pull") == 0) {
+	else if (strcmp(argv[1], "pullH264") == 0) {
 		if (argc < 2) return -1;
-		pull(argv[2]);
+		pullH264(argv[2]);
+	}
+	else if (strcmp(argv[1], "pullRaw") == 0) {
+		if (argc < 3) return -1;
+		pullRaw(argv[2], argv[3]);
 	}
 
 	cleanSock();

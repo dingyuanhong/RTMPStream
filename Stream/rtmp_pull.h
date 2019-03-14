@@ -31,6 +31,8 @@ public:
 	int Read();
 	int ReadPacket();
 
+	bool IsConnected();
+
 	RTMP * Handle() {
 		return rtmp;
 	}

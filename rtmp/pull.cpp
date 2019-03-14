@@ -22,17 +22,7 @@ extern "C" {
 
 #include "libyuv.h"
 
-static int readAble(int fd, uint32_t usec)
-{
-	struct timeval timeout;
-	fd_set fds;
-	FD_ZERO(&fds);
-	FD_SET(fd, &fds);
-	timeout.tv_sec = usec / 1000000;
-	timeout.tv_usec = usec % 1000000;
-	int ret = select(0, &fds, NULL, &fds, &timeout);
-	return ret;
-}
+#include "util.h"
 
 class RawData
 	: public RTMPPull::Callback
@@ -40,17 +30,32 @@ class RawData
 public:
 	RawData(const char * file)
 	{
-		fp = fopen(file, "wb+");
+		m_file = (char*)file;
+		//fp = fopen(file, "wb+");
 	}
 	~RawData() {
-		fclose(fp);
+		if(fp != NULL) fclose(fp);
 	}
 private:
 	void onPacket(uint8_t * packet, int len) {
+		
 		if (fp != NULL) fwrite(packet, 1, len, fp);
 	}
 
+	void onPacket(RTMPPacket *packet) {
+		char name[255];
+		sprintf(name, "%s/%d.bit", m_file,index++);
+		fp = fopen(name,"wb+");
+		if (fp != NULL) {
+			fwrite(packet->m_body, 1, packet->m_nBodySize, fp);
+			fclose(fp);
+			fp = NULL;
+		}
+	};
+
+	char * m_file;
 	FILE * fp = NULL;
+	int index = 0;
 };
 
 class H264Decode
@@ -58,12 +63,12 @@ class H264Decode
 {
 public:
 	H264Decode() {
-		time = timeGetTime();
+		time = getCurrentTime();
 		first = true;
 		firstPacket = true;
 	}
 	virtual void onPacket(RTMPPacket *packet) {
-		uint32_t c = timeGetTime();
+		int64_t c = getCurrentTime();
 
 		if (firstPacket) {
 			printf("c:%d t:%d diff:%d\n", c, time, c - time);
@@ -81,9 +86,10 @@ public:
 			uint8_t * body = (uint8_t*)packet->m_body;
 			if (body != NULL)
 			{
-				//printf("%02x %02x %02x %02x %02x\n", body[0], body[1], body[2], body[3], body[4]);
+				//FrameType|CodecID PacketType CompositionTime 
+				printf("%02x %02x %02x %02x %02x : %02X %02X %02X %02X %02X\n", body[0], body[1], body[2], body[3], body[4],   body[5], body[6], body[7], body[8], body[9]);
 
-				//printf(" c:%d t:%d diff:%d\n", c, packet->m_nTimeStamp, c - packet->m_nTimeStamp);
+				printf(" c:%lld t:%d diff:%d absolute:%d\n", c, packet->m_nTimeStamp, (uint32_t)(c - packet->m_nTimeStamp) ,packet->m_hasAbsTimestamp);
 
 				//printf("t:%d\n", packet->m_nTimeStamp);
 			}
@@ -93,20 +99,59 @@ public:
 		}
 	}
 private:
-	uint32_t time;
+	int64_t time;
 	bool first;
 	bool firstPacket;
 };
 
-void pull(char * url) 
+void pullRaw(char * url,char * output)
+{
+	RawData data(output);
+	RTMPPull pull;
+	pull.start(&data);
+	int ret = pull.connect(url);
+	if (ret < 0) {
+		return;
+	}
+	int failedCount = 0;
+	while (true) {
+		int n = pull.ReadPacket();
+		if (n == FALSE) {
+			failedCount++;
+			if (failedCount >= 5) {
+				int ret = RTMP_ReconnectStream(pull.Handle(), -1);
+				if (ret == 0) {
+					break;
+				}
+				continue;
+			}
+		}
+		else {
+			failedCount = 0;
+		}
+		int ret = readAble(RTMP_Socket(pull.Handle()), 1000);
+
+		if (ret == -1) {
+			if (!pull.IsConnected()) break;
+		}
+	}
+}
+
+void pullH264(char * url) 
 {
 	//RawData data("./raw.h264");
 	H264Decode data;
 	RTMPPull pull;
 	pull.start(&data);
-	pull.connect(url);
+	int ret = pull.connect(url);
+	if (ret < 0) {
+		return;
+	}
 	while (true) {
 		int n = pull.ReadPacket();
-		readAble(RTMP_Socket(pull.Handle()), 1000);
+		int ret = readAble(RTMP_Socket(pull.Handle()), 1000);
+		if (ret == -1) {
+			if (!pull.IsConnected()) break;
+		}
 	}
 }

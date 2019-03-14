@@ -329,7 +329,7 @@ void CShowDlg::OnBnClickedCancel()
 		argb = NULL;
 	}
 
-	CDialogEx::OnCancel();
+	//CDialogEx::OnCancel();
 }
 
 void CShowDlg::InitBITMAP(int width, int height)
@@ -594,7 +594,11 @@ void CShowDlg::Run()
 {
 	while (!bStop) {
 		int n = pull->ReadPacket();
-		readAble(RTMP_Socket(pull->Handle()), 1000);
+		int ret  = readAble(RTMP_Socket(pull->Handle()), 1000);
+		if (ret == -1) {
+			if (!pull->IsConnected()) break;
+
+		}
 	}
 }
 

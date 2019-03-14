@@ -18,6 +18,8 @@ int RTMPPull::connect(char * url)
 		rtmp->Link.lFlags |= RTMP_LF_LIVE;
 	}
 
+	rtmp->Link.timeout = 1;
+
 	RTMP_SetBufferMS(rtmp, 3600 * 1000);
 
 	ret = RTMP_Connect(rtmp, NULL);
@@ -68,8 +70,9 @@ int RTMPPull::ReadPacket()
 			if (callback_ != NULL) {
 				callback_->onPacket(&packet);
 			}
+
+			RTMPPacket_Free(&packet);
 		}
-		RTMPPacket_Free(&packet);
 
 		if (bstop) break;
 		if (!RTMP_IsConnected(rtmp)) {
@@ -78,6 +81,14 @@ int RTMPPull::ReadPacket()
 	}
 
 	return nRead;
+}
+
+bool RTMPPull::IsConnected() {
+	if (!rtmp) return false;
+	if (!RTMP_IsConnected(rtmp)) {
+		return false;
+	}
+	return true;
 }
 
 void RTMPPull::stop(bool b)
