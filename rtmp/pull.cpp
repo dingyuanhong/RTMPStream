@@ -51,6 +51,8 @@ private:
 			fclose(fp);
 			fp = NULL;
 		}
+
+		printf("%d %f\n", packet->m_nBodySize - 5, (packet->m_nBodySize - 5)/ 1024.0);
 	};
 
 	char * m_file;
@@ -87,9 +89,9 @@ public:
 			if (body != NULL)
 			{
 				//FrameType|CodecID PacketType CompositionTime 
-				printf("%02x %02x %02x %02x %02x : %02X %02X %02X %02X %02X\n", body[0], body[1], body[2], body[3], body[4],   body[5], body[6], body[7], body[8], body[9]);
+				//printf("%02x %02x %02x %02x %02x : %02X %02X %02X %02X %02X\n", body[0], body[1], body[2], body[3], body[4],   body[5], body[6], body[7], body[8], body[9]);
 
-				printf(" c:%lld t:%d diff:%d absolute:%d\n", c, packet->m_nTimeStamp, (uint32_t)(c - packet->m_nTimeStamp) ,packet->m_hasAbsTimestamp);
+				printf("%d c:%lld t:%d diff:%d absolute:%d\n",packet->m_nBodySize - 5, c, packet->m_nTimeStamp, (uint32_t)(c - packet->m_nTimeStamp) ,packet->m_hasAbsTimestamp);
 
 				//printf("t:%d\n", packet->m_nTimeStamp);
 			}
